@@ -2,49 +2,47 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * @class AVLTree class
- * @brief The AVLTree is a self-balancing generic binary search tree.
- * @description In this data structure the heights of the two 
- * child subtrees of any node differ by at most one; if at any time 
- * they differ by more than one, rebalancing is done to restore this 
- * property. 
- * Lookup, insertion, and deletion all take O(log n) time in both the 
- * average and worst cases, where n is the number of nodes in the tree 
- * prior to the operation. Insertions and deletions may require the 
- * tree to be rebalanced by one or more tree rotations.
+ * @class AVLTreeMap class
+ * @brief The AVLTreeMap is a self-balancing generic binary search tree map.
+ * @description Each node will identifies by a key. 
  * 
  * @author Christian Kusan
- * @param <R> the generic datatype R
+ * @param <K> the generic datatype K for the key
+ * @param <V> the generic datatype V for the value
  */
-public class AVLTree<R extends Comparable<R>> {
+public class AVLTreeMap<K extends Comparable<K>, V> {
     
     
     // -- attributes --------------------------
     
     /** The root node. */
-    private Node<R> _root;
+    private Node<K, V> _root;
     
     /**
      * @class Node class
      * @brief Describes one single node in generic tree structure.
-     * @param <T> the generic datatype T
+     * @param <K> the generic datatype K for the key
+     * @param <V> the generic datatype V for the value
      */
-    private class Node<T extends Comparable<T>> implements Comparable<Node<T>> {
+    private class Node<K extends Comparable<K>, V> implements Comparable<Node<K, V>> {
  
-	private T _data;
+	private K _key;
+        private V _value;
+        
 	private int _depth;
         private int _level;
         
-        private Node<T> _left;
-	private Node<T> _right;
+        private Node<K, V> _left;
+	private Node<K, V> _right;
 	
-	public Node(T data) {
-            this(data, null, null);
+	public Node(K key, V value) {
+            this(key, value, null, null);
 	}
  
-	public Node(T data, Node<T> left, Node<T> right) {
+	public Node(K key, V value, Node<K, V> left, Node<K, V> right) {
 	
-            _data = data;
+            _key = key;
+            _value = value;
             _left = left;
             _right = right;
 	
@@ -59,13 +57,13 @@ public class AVLTree<R extends Comparable<R>> {
 	}
  
 	@Override
-	public int compareTo(Node<T> other) {
-            return this._data.compareTo(other._data);
+	public int compareTo(Node<K, V> other) {
+            return this._key.compareTo(other._key);
 	}
  
 	@Override
 	public String toString() {
-            return "Level " + _level + ": " + _data;
+            return "Level " + _level + ": " + _key + " - " + _value;
 	}
  
     }
@@ -79,10 +77,10 @@ public class AVLTree<R extends Comparable<R>> {
      */
     public static void main(String[] args){
             
-        AVLTree<Integer> intTree = new AVLTree<>();
+        AVLTreeMap<Integer, Integer> intTree = new AVLTreeMap<>();
 	
         for (int i = 0; 10 > i; ++i)
-            intTree.insertData(i);
+            intTree.insertData(i, i*i);
 
         intTree.traverse(Order.LEVELORDER);
     }
@@ -93,7 +91,7 @@ public class AVLTree<R extends Comparable<R>> {
     /**
      * @brief The default constructor.
      */
-    public AVLTree() {
+    public AVLTreeMap() {
         _root = null;
     }
     
@@ -105,7 +103,7 @@ public class AVLTree<R extends Comparable<R>> {
      * @param node the head of tree
      * @return the current node
      */
-    private Node<R> balance(Node<R> node){
+    private Node<K, V> balance(Node<K, V> node){
         
         switch (isBalanced(node)) {
             case -1:
@@ -119,23 +117,17 @@ public class AVLTree<R extends Comparable<R>> {
     
     /**
      * @brief Checks whether the tree contains a specific data object.
-     * @param data the data object
+     * @param key the assigned key of searched value
      * @return true if the tree contains the object, otherwise false
      */
-    public boolean contains(R data) {
+    public boolean contains(K key) {
         
-        /* 
-        Here we can use the binary search method:
-        Recursive division while we arrived at the end of tree 
-        or found the data object.
-        */
-        
-        Node<R> node = _root;
+        Node<K, V> node = _root;
 		
         while (null != node) 
-            if (0 == node._data.compareTo(data))
+            if (0 == node._key.compareTo(key))
                 return true;
-            else if (0 < node._data.compareTo(data))
+            else if (0 < node._key.compareTo(key))
                 node = node._left;
             else
                 node = node._right;
@@ -148,35 +140,69 @@ public class AVLTree<R extends Comparable<R>> {
      * @param head the root node of the tree
      * @return the tree depth represents by a number
      */
-    private int depth(Node<R> head) {
+    private int depth(Node<K, V> head) {
     
         return (null == head) ? 0 : head._depth;
+    }
+    
+    /**
+     * @brief Gets the key of a value.
+     * @param value the value
+     * @return the key object or null if not exists
+     */
+    public K getKey(V value){
+        
+        if(null != value)
+            return searchValue(_root, value)._key;
+        
+        return null;
+    }
+    
+    /**
+     * @brief Gets the value identified by a key.
+     * @param key the key
+     * @return the value or null if not exists
+     */
+    public V getValue(K key) {
+        
+        Node<K, V> node = _root;
+		
+        while (null != node) 
+            if (0 == node._key.compareTo(key))
+                return node._value;
+            else if (0 < node._key.compareTo(key))
+                node = node._left;
+            else
+                node = node._right;
+        
+        return null;
     }
     
     /**
      * @brief Inorder traverse.
      * @param node the current node
      */
-    private void inOrderTraverse(Node<R> node){
+    private void inOrderTraverse(Node<K, V> node){
         
         if(null == node)
             return;
         
         inOrderTraverse(node._left);
         
-        System.out.println(node._data);
+        System.out.println(node._key);
         
         inOrderTraverse(node._right); 
     }
     
     /**
      * @brief Inserts data.
-     * @param data the data object
+     * @param key the key
+     * @param value the value
      * @return the current node
      */
-    private Node<R> insert(R data) {
+    private Node<K, V> insert(K key, V value) {
         
-        _root = insert(_root, data);
+        _root = insert(_root, key, value);
 	
         // balancing
         
@@ -196,26 +222,19 @@ public class AVLTree<R extends Comparable<R>> {
     /**
      * @brief Inserts a new node by recursive process.
      * @param node the current node
-     * @param data the data object
+     * @param key the key
+     * @param value the value
      * @return the next current node
      */
-    private Node<R> insert(Node<R> node, R data) {
+    private Node<K, V> insert(Node<K, V> node, K key, V value) {
         
         if (null == node)
-            return new Node<>(data);
+            return new Node<>(key, value);
 	
-        /*
-        Instead of using the compareTo method of node class we 
-        work with compareto of T - its the simplest solution. 
-        Otherwise we had to create a new node instance in each 
-        iteration: 
-                    node.compareTo(new Node(data))
-        */
-        
-        if (0 < node._data.compareTo(data)) 
-            node = new Node<>(node._data, insert(node._left, data), node._right);
-	else if (0 > node._data.compareTo(data))
-            node = new Node<>(node._data, node._left, insert(node._right, data));
+        if (0 < node._key.compareTo(key)) 
+            node = new Node<>(node._key, node._value, insert(node._left, key, value), node._right);
+	else if (0 > node._key.compareTo(key))
+            node = new Node<>(node._key, node._value, node._left, insert(node._right, key, value));
 	
         // rebalancing
         return balance(node);
@@ -223,18 +242,12 @@ public class AVLTree<R extends Comparable<R>> {
     
     /**
      * @brief Inserts data.
-     * @param data the data object
+     * @param key the key
+     * @param value the value
      */
-    public void insertData(R data){
+    public void insertData(K key, V value){
         
-        /* 
-        This is the facade method, we don't want to export 
-        the non-public type Node<R> (data hiding).
-        Try it: Change the access modifier of insert-method to public. 
-        Now your IDE at least should give a warning.
-        */
-        
-        insert(data);
+        insert(key, value);
     }
     
     /**
@@ -248,7 +261,7 @@ public class AVLTree<R extends Comparable<R>> {
      *  <li>1: the tree is deeper on the right side</li>
      * </ul>
      */
-    private int isBalanced(Node<R> head) {
+    private int isBalanced(Node<K, V> head) {
         
         int leftDepth = depth(head._left);
         int rightDepth = depth(head._right);
@@ -267,17 +280,17 @@ public class AVLTree<R extends Comparable<R>> {
     private void levelOrderTraverse() {
         
         _root._level = 0;
-        Queue<Node<R>> queue = new LinkedList<>();
+        Queue<Node<K, V>> queue = new LinkedList<>();
         queue.add(_root);
 	
         while (!queue.isEmpty()) {
 	
-            Node<R> node = queue.poll();
+            Node<K, V> node = queue.poll();
             System.out.println(node);
             int level = node._level;
             
-            Node<R> leftNode = node._left;
-            Node<R> rightNode = node._right;
+            Node<K, V> leftNode = node._left;
+            Node<K, V> rightNode = node._right;
 	
             if (null != leftNode) {
                 leftNode._level = 1 + level;
@@ -292,62 +305,62 @@ public class AVLTree<R extends Comparable<R>> {
     }
     
     /**
-     * @brief Gets the highest value in tree structure.
-     * @return the object of generic type R if the tree is not empty, 
-     * otherwise null
+     * @brief Gets the highest key in tree structure.
+     * @return the key object of generic type K if the tree 
+     * is not empty, otherwise null
      */
-    public R maxValue() {
+    public K maxKey() {
         
         if(null != _root)
-            return maxValue(_root);
+            return maxKey(_root);
 
         return null;
     }
     
     /**
-     * @brief Gets the highest value in tree structure by 
+     * @brief Gets the highest key in tree structure by 
      * recursive process.
-     * @return the object of generic type R
+     * @return the key object of generic type K
      */
-    private R maxValue(Node<R> node) {
+    private K maxKey(Node<K, V> node) {
         
         if(null == node._right)
-            return node._data;
+            return node._key;
         
-        return maxValue(node._right);
+        return maxKey(node._right);
     }
  
     /**
-     * @brief Gets the least value in tree structure.
-     * @return the object of generic type R if the tree is not empty, 
-     * otherwise null
+     * @brief Gets the least key in tree structure.
+     * @return the key object of generic type K if the tree 
+     * is not empty, otherwise null
      */
-    public R minValue() {
+    public K minKey() {
         
         if(null != _root)
-            return minValue(_root);
+            return minKey(_root);
         
         return null;
     }
     
     /**
-     * @brief Gets the least value in tree structure 
+     * @brief Gets the least key in tree structure 
      * by recursive process.
-     * @return the object of generic type R
+     * @return the key object of generic type K
      */
-    private R minValue(Node<R> node) {
+    private K minKey(Node<K, V> node) {
         
         if(null == node._left)
-            return node._data;
+            return node._key;
         
-        return minValue(node._left);
+        return minKey(node._left);
     }
  
     /**
      * @brief Postorder traverse.
      * @param node the current node
      */
-    private void postOrderTraverse(Node<R> node){
+    private void postOrderTraverse(Node<K, V> node){
     
         if (null == node)
             return;
@@ -355,19 +368,19 @@ public class AVLTree<R extends Comparable<R>> {
         postOrderTraverse(node._left);
         postOrderTraverse(node._right); 
         
-        System.out.println(node._data);
+        System.out.println(node);
     }
     
     /**
      * @brief Preorder traverse
      * @param node the current node
      */
-    private void preOrderTraverse(Node<R> node){
+    private void preOrderTraverse(Node<K, V> node){
     
         if(null == node)
             return;
         
-        System.out.println(node._data);
+        System.out.println(node);
         
         preOrderTraverse(node._left);
         preOrderTraverse(node._right); 
@@ -375,27 +388,27 @@ public class AVLTree<R extends Comparable<R>> {
     
     /**
      * @brief Removes data.
-     * @param data the data object
+     * @param key the key of value
      */
-    public void remove(R data) {
-        _root = remove(_root, data);
+    public void removeKey(K key) {
+        _root = removeKey(_root, key);
     }
-	
+
     /**
      * @brief Removes a node by recursive process.
      * @param node the root of the tree
-     * @param data the data to be deleted
+     * @param key the key of value to be deleted
      * @return the current node
      */
-    private Node<R> remove(Node<R> node, R data) {
+    private Node<K, V> removeKey(Node<K, V> node, K key) {
         
         if(null == node)
             return null;
         
-        if(0 > data.compareTo(node._data))
-            node._left = remove(node._left, data);
-        else if(0 < data.compareTo(node._data))
-            node._right = remove(node._right, data);
+        if(0 > key.compareTo(node._key))
+            node._left = removeKey(node._left, key);
+        else if(0 < key.compareTo(node._key))
+            node._right = removeKey(node._right, key);
         else {
             
             // no children
@@ -410,9 +423,9 @@ public class AVLTree<R extends Comparable<R>> {
                 return node._left;
 			
             // two children
-            R smallestValue = minValue(node._right);
-            node._data = smallestValue;
-            node._right = remove(node._right, smallestValue);
+            K smallestValue = minKey(node._right);
+            node._key = smallestValue;
+            node._right = removeKey(node._right, smallestValue);
         }
         
         // rebalancing
@@ -420,20 +433,34 @@ public class AVLTree<R extends Comparable<R>> {
     }
     
     /**
+     * @brief Removes a value of tree.
+     * @param value the value
+     */
+    public void removeValue(V value){
+        
+        if(null != value){
+            K key = getKey(value);
+            
+            if(null != key)
+                removeKey(key);
+        }
+    }
+    
+    /**
      * @brief Rotates to the left.
      * @param node the current node
      * @return the right node of current
      */
-    private Node<R> rotateLeft(Node<R> node) {
+    private Node<K, V> rotateLeft(Node<K, V> node) {
         
-        Node<R> leftNode = node._left;
-        Node<R> rightNode = node._right;
+        Node<K, V> leftNode = node._left;
+        Node<K, V> rightNode = node._right;
         
-        Node<R> rightLeftNode = rightNode._left;
-        Node<R> rightrightNode = rightNode._right;
+        Node<K, V> rightLeftNode = rightNode._left;
+        Node<K, V> rightrightNode = rightNode._right;
         
-        node = new Node<>(node._data, leftNode, rightLeftNode);
-        rightNode = new Node<>(rightNode._data, node, rightrightNode);
+        node = new Node<>(node._key, node._value, leftNode, rightLeftNode);
+        rightNode = new Node<>(rightNode._key, rightNode._value, node, rightrightNode);
         
         return rightNode;
     }
@@ -443,18 +470,38 @@ public class AVLTree<R extends Comparable<R>> {
      * @param node the current node
      * @return the left node of current
      */
-    private Node<R> rotateRight(Node<R> node) {
+    private Node<K, V> rotateRight(Node<K, V> node) {
 
-        Node<R> leftNode = node._left;
-        Node<R> rightNode = node._right;
+        Node<K, V> leftNode = node._left;
+        Node<K, V> rightNode = node._right;
         
-        Node<R> leftLeftNode = leftNode._left;
-        Node<R> leftRightNode = leftNode._right;
+        Node<K, V> leftLeftNode = leftNode._left;
+        Node<K, V> leftRightNode = leftNode._right;
         
-        node = new Node<>(node._data, leftRightNode, rightNode);
-        leftNode = new Node<>(leftNode._data, leftLeftNode, node);
+        node = new Node<>(node._key, node._value, leftRightNode, rightNode);
+        leftNode = new Node<>(leftNode._key, leftNode._value, leftLeftNode, node);
         
         return leftNode;
+    }
+
+    /**
+     * @brief Searches a node with a certain value.
+     * @param node the root of the tree
+     * @param value the searched value
+     * @return the found node or null if tree does not contains the 
+     * value
+     */
+    private Node<K, V> searchValue(Node<K, V> node, V value){
+        
+        while (null != node) 
+            if(node._value.equals(value))
+                return node;
+            else if(null == node._right)
+                node = node._left;
+            else
+                node = node._right;
+        
+        return null; 
     }
     
     /**
@@ -471,13 +518,6 @@ public class AVLTree<R extends Comparable<R>> {
      * @param order the traverse order
      */
     void traverse(Order order){
-        /*
-        This method has the access modifier package because the 
-        enum is non-public. So this method is only useable in this 
-        package or directory.
-        Another option would be to write the enum in an extra file 
-        with public access modifier. 
-        */
         
         switch(order){
             case INORDER:
@@ -493,6 +533,7 @@ public class AVLTree<R extends Comparable<R>> {
                 postOrderTraverse(_root);
         }
     }
+    
 }
 
 /**
