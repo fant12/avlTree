@@ -81,13 +81,10 @@ public class AVLTree<R extends Comparable<R>> {
             
         AVLTree<Integer> intTree = new AVLTree<>();
 	
-        for (int i = 0; 9 > i; ++i)
+        for (int i = 0; 10 > i; ++i)
             intTree.insertData(i);
-            
-        intTree.traverse(Order.INORDER);
-        
-        //System.out.println("max:" + intTree.maxValue());
-        //System.out.println("min:" + intTree.minValue());
+
+        intTree.traverse(Order.LEVELORDER);
     }
     
     
@@ -102,6 +99,23 @@ public class AVLTree<R extends Comparable<R>> {
     
     
     // -- methods -----------------------------
+    
+    /**
+     * @brief Balances a tree.
+     * @param node the head of tree
+     * @return the current node
+     */
+    private Node<R> balance(Node<R> node){
+        
+        switch (isBalanced(node)) {
+            case -1:
+                return rotateRight(node);
+            case 1:
+                return rotateLeft(node);
+	    default: 
+                return node;
+        }
+    }
     
     /**
      * @brief Checks whether the tree contains a specific data object.
@@ -140,7 +154,7 @@ public class AVLTree<R extends Comparable<R>> {
     }
     
     /**
-     * Inorder traverse.
+     * @brief Inorder traverse.
      * @param node the current node
      */
     private void inOrderTraverse(Node<R> node){
@@ -204,15 +218,7 @@ public class AVLTree<R extends Comparable<R>> {
             node = new Node<>(node._data, node._left, insert(node._right, data));
 	
         // rebalancing
-        
-        switch (isBalanced(node)) {
-            case -1:
-                return rotateRight(node);
-            case 1:
-                return rotateLeft(node);
-	    default: 
-                return node;
-        }
+        return balance(node);
     }
     
     /**
@@ -287,40 +293,58 @@ public class AVLTree<R extends Comparable<R>> {
     
     /**
      * @brief Gets the highest value in tree structure.
-     * @return the object of generic type R
+     * @return the object of generic type R if the tree is not empty, 
+     * otherwise null
      */
     public R maxValue() {
         
-        Node<R> node = _root;
+        if(null != _root)
+            return maxValue(_root);
+
+        return null;
+    }
+    
+    /**
+     * @brief Gets the highest value in tree structure by 
+     * recursive process.
+     * @return the object of generic type R
+     */
+    private R maxValue(Node<R> node) {
         
-        if(null == node)
-            return null;
+        if(null == node._right)
+            return node._data;
         
-        while (null != node._right)
-            node = node._right;
-        
-        return node._data;
+        return maxValue(node._right);
     }
  
     /**
      * @brief Gets the least value in tree structure.
-     * @return the object of generic type R
+     * @return the object of generic type R if the tree is not empty, 
+     * otherwise null
      */
     public R minValue() {
         
-        Node<R> node = _root;
-	
-        if (null == node)
-            return null;
-	
-        while (null != node._left)
-            node = node._left;
-	
-        return node._data;
+        if(null != _root)
+            return minValue(_root);
+        
+        return null;
+    }
+    
+    /**
+     * @brief Gets the least value in tree structure 
+     * by recursive process.
+     * @return the object of generic type R
+     */
+    private R minValue(Node<R> node) {
+        
+        if(null == node._left)
+            return node._data;
+        
+        return minValue(node._left);
     }
  
     /**
-     * Postorder traverse.
+     * @brief Postorder traverse.
      * @param node the current node
      */
     private void postOrderTraverse(Node<R> node){
@@ -335,7 +359,7 @@ public class AVLTree<R extends Comparable<R>> {
     }
     
     /**
-     * Preorder traverse
+     * @brief Preorder traverse
      * @param node the current node
      */
     private void preOrderTraverse(Node<R> node){
@@ -347,6 +371,54 @@ public class AVLTree<R extends Comparable<R>> {
         
         preOrderTraverse(node._left);
         preOrderTraverse(node._right); 
+    }
+    
+    /**
+     * Removes data.
+     * @param data the data object
+     */
+    public void remove(R data) {
+        _root = remove(_root, data);
+    }
+	
+    /**
+     * @brief Removes a node by recursive process.
+     * @param node the root of the tree
+     * @param data the data to be deleted
+     * @return the current node
+     */
+    private Node<R> remove(Node<R> node, R data) {
+        
+        if(null == node)
+            return null;
+        
+        if(0 > data.compareTo(node._data)) {
+            node._left = remove(node._left, data);
+        } 
+	else if(0 < data.compareTo(node._data)) {
+            node._right = remove(node._right, data);
+        } 
+	else {
+            
+            // no children
+            if(null == node._left && null == node._right)
+                return null;
+	
+            // one child - guaranteed to be balanced
+            if(null == node._left)
+                return node._right;
+            
+            if(null == node._right)
+                return node._left;
+			
+            // two children
+            R smallestValue = minValue(node._right);
+            node._data = smallestValue;
+            node._right = remove(node._right, smallestValue);
+        }
+        
+        // rebalancing
+        return balance(node);
     }
     
     /**
@@ -397,7 +469,7 @@ public class AVLTree<R extends Comparable<R>> {
     }
     
     /**
-     * Traverses through the tree structure.
+     * @brief Traverses through the tree structure.
      * @param order the traverse order
      */
     void traverse(Order order){
@@ -426,7 +498,8 @@ public class AVLTree<R extends Comparable<R>> {
 }
 
 /**
- * An enumeration of possible order types to traverses the 
+ * @class Order enumeration class
+ * @brief An enumeration of possible order types to traverses the 
  * tree structure.
  * @author Christian Kusan
  */
